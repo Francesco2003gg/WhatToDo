@@ -69,7 +69,7 @@ if not st.session_state.get("activity_submitted", False):
         "But now I have a few questions for you to help me decide what we should do.")
         
         physical_activity = st.slider("How much would you like to do something physically active?", 1, 5, 3)
-        travel_problem = st.slider("How much of a problem would it be to travel to the activity? (1 = Not a problem, 5 = Very problematic) (At most is 40 minutes by tram {20 tram + 20 walk})", 1, 5, 3)
+        travel_problem = st.slider("How much of a problem would it be to travel to the activity? (1 = Not a problem, 5 = Very problematic) (At most is 40 minutes away {20 tram + 20 walk})", 1, 5, 3)
         talk_importance = st.slider("How important is it to talk to each other during the activity? (1 = Not important, 5 = Very important)", 1, 5, 3)
         
         submit_button = st.form_submit_button(label='Submit')
