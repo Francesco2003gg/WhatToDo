@@ -76,7 +76,7 @@ if not st.session_state.get("activity_submitted", False):
 
 if not st.session_state.get("activity_submitted", False) and submit_button:
     def prob_dist(input, val):
-        return (input + val)*1.5
+        return (input + val)**1.43
     
     # Calculate scores for each activity in euclidean distance style
     ice_skating_score = ((physical_activity-5)**2 + prob_dist(travel_problem, 2.5) + (talk_importance-2)**2)**0.5
