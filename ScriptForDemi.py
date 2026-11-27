@@ -70,10 +70,10 @@ if not st.session_state.get("activity_submitted", False):
         submit_button = st.form_submit_button(label='Submit')
 
 if not st.session_state.get("activity_submitted", False) and submit_button:
-    # Calculate scores for each activity
-    ice_skating_score = physical_activity * 5 + travel_problem * 4 + talk_importance * 2
-    arcade_score = physical_activity * 3 + travel_problem * 2 + talk_importance * 4
-    live_music_score = physical_activity * 1 + travel_problem * 5 + talk_importance * 5
+    # Calculate scores for each activity in euclidean distance style
+    ice_skating_score = ((physical_activity-5)**2 + (travel_problem-4)**2 + (talk_importance-2)**2)**0.5
+    arcade_score = ((physical_activity-3)**2 + (travel_problem-2)**2 + (talk_importance-4)**2)**0.5
+    live_music_score = ((physical_activity-1)**2 + (travel_problem-5)**2 + (talk_importance-5)**2)**0.5
 
     # Determine the suggested activity based on the highest score
     scores = {
@@ -82,8 +82,8 @@ if not st.session_state.get("activity_submitted", False) and submit_button:
         "Live music": live_music_score
     }
     
-    suggested_activity = max(scores, key=scores.get)
-
+    suggested_activity = min(scores, key=scores.get)  # Get the activity with the lowest score (closest match)
+    
     st.session_state.activity_submitted = True
     st.session_state.suggested_activity = suggested_activity
 
