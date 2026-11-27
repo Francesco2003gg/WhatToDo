@@ -59,7 +59,7 @@ st.write("Let's find out what we should do on Sunday night!")
 submit_button = False
 if not st.session_state.get("activity_submitted", False):
     with st.form(key='activity_form'):
-        st.write("Did you really think I forgot about you? I could never.\nI just had to install all the stuff on this new laptop," \
+        st.markdown("Did you really think I forgot about you? I could never.\nI just had to install all the stuff on this new laptop," \
         "but now we're more than ready to decide what to do!\n" \
         "But now I have a few questions for you to help me decide what we should do.")
         
@@ -93,7 +93,7 @@ if st.session_state.get("activity_submitted", False):
     
     if not st.session_state.get("food_decision_submitted", False):
         with st.form(key="food_decision_form"):
-            st.write("Would you like to decide what to eat after the activity?\n"
+            st.markdown("Would you like to decide what to eat after the activity or do you wanna leave it to Sunday night?\n"
                      "Keep in mind that I didn't forget what we said and the incredible fact that you never saw "
                      "the movies we talked about, so remember that after the activity we either go to eat something and then have to "
                      "watch the movie, or we go directly to watch the movie, your choice.")
