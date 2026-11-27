@@ -18,9 +18,9 @@ The scoring system will be as follows:
 - How important it is to talk to each other during the activity? (1 = Not important, 5 = Very important)
 
 And the relative scores for each activity will be:
-- Ice Skating with the lights: 5, 4, 2
-- Arcade: 3, 2, 4
-- Live music: 1, 5, 5
+- Ice Skating with the lights: 5, 2.5, 2
+- Arcade: 3, 4, 4
+- Live music: 1, 1, 5
 
 In the end she will also have the option to choose whether she wants to eat something after that, and she can choose if she wants to
 already decide or leave it for later.
@@ -38,13 +38,18 @@ from email.message import EmailMessage
 
 EMAIL_SENDER       = "francrscopicaro@gmail.com" # Il mio indirizzo email
 EMAIL_RECIPIENT    = "francrscopicaro@gmail.com" # L'indirizzo email di destinazione
+ACTIVITIES = [
+    "Ice Skating with the lights",
+    "Arcade",
+    "Live music",
+]
 
 def send_mail(activity, food):
     msg = EmailMessage()
     msg['Subject'] = "Sunday Night Activity Suggestion"
     msg['From'] = EMAIL_SENDER
     msg['To'] = EMAIL_RECIPIENT
-    msg.set_content(f"Based on your answers, I suggest we go to: {activity} and eat {food}")
+    msg.set_content(f"The chosen activity is {activity}, and the food choice is {food}.")
 
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
         server.login(EMAIL_SENDER, st.secrets["email"]["app_password"])
@@ -64,16 +69,19 @@ if not st.session_state.get("activity_submitted", False):
         "But now I have a few questions for you to help me decide what we should do.")
         
         physical_activity = st.slider("How much would you like to do something physically active?", 1, 5, 3)
-        travel_problem = st.slider("How much of a problem would it be to travel to the activity? (1 = Very problematic, 5 = Not a problem)", 1, 5, 3)
+        travel_problem = st.slider("How much of a problem would it be to travel to the activity? (1 = Not a problem, 5 = Very problematic) (At most is 40 minutes by tram {20 tram + 20 walk})", 1, 5, 3)
         talk_importance = st.slider("How important is it to talk to each other during the activity? (1 = Not important, 5 = Very important)", 1, 5, 3)
         
         submit_button = st.form_submit_button(label='Submit')
 
 if not st.session_state.get("activity_submitted", False) and submit_button:
+    def prob_dist(input, val):
+        return (input + val)*1.5
+    
     # Calculate scores for each activity in euclidean distance style
-    ice_skating_score = ((physical_activity-5)**2 + (travel_problem-4)**2 + (talk_importance-2)**2)**0.5
-    arcade_score = ((physical_activity-3)**2 + (travel_problem-2)**2 + (talk_importance-4)**2)**0.5
-    live_music_score = ((physical_activity-1)**2 + (travel_problem-5)**2 + (talk_importance-5)**2)**0.5
+    ice_skating_score = ((physical_activity-5)**2 + prob_dist(travel_problem, 2.5) + (talk_importance-2)**2)**0.5
+    arcade_score = ((physical_activity-3)**2 + prob_dist(travel_problem, 4) + (talk_importance-4)**2)**0.5
+    live_music_score = ((physical_activity-1)**2 + prob_dist(travel_problem, 1) + (talk_importance-5)**2)**0.5
 
     # Determine the suggested activity based on the highest score
     scores = {
@@ -86,54 +94,75 @@ if not st.session_state.get("activity_submitted", False) and submit_button:
     
     st.session_state.activity_submitted = True
     st.session_state.suggested_activity = suggested_activity
+    st.rerun()
 
 if st.session_state.get("activity_submitted", False):
     suggested_activity = st.session_state.suggested_activity
-    st.write(f"Based on your answers, I suggest we go to: **{suggested_activity}**!")
-    
-    if not st.session_state.get("food_decision_submitted", False):
-        with st.form(key="food_decision_form"):
-            st.markdown("Would you like to decide what to eat after the activity or do you wanna leave it to Sunday night?\n"
-                     "Keep in mind that I didn't forget what we said and the incredible fact that you never saw "
-                     "the movies we talked about, so remember that after the activity we either go to eat something and then have to "
-                     "watch the movie, or we go directly to watch the movie, your choice.")
-            food_decision = st.radio("Choose an option:", ["Decide now", "Decide later"])
-            food_decision_submit_button = st.form_submit_button(label="Submit")
+    st.write(f"Based on your answers, my suggestion is: **{suggested_activity}**.")
 
-        if food_decision_submit_button:
-            if food_decision == "Decide later":
-                send_mail(suggested_activity, "Decide later")
-                st.session_state.food_choice = "Decide later"
-                st.session_state.food_submitted = True
-            st.session_state.food_decision = food_decision
-            st.session_state.food_decision_submitted = True
-
-    if (
-        st.session_state.get("food_decision_submitted", False)
-        and st.session_state.food_decision == "Decide now"
-        and not st.session_state.get("food_submitted", False)
-    ):
-        with st.form(key="food_choice_form"):
-            food_choice = st.selectbox(
-                "What would you prefer to eat?",
-                [
-                    "Pizza (Always a nice idea)",
-                    "Gyoza and Ramen (I saw a cute place close to you)",
-                    "Korean fried chicken (Same as Gyoza and Ramen)",
-                    "Something else that you know in your surroundings",
-                ],
+    if not st.session_state.get("activity_choice_submitted", False):
+        with st.form(key="activity_choice_form"):
+            chosen_activity = st.selectbox(
+                "Which activity would you like to do?",
+                ACTIVITIES,
+                index=ACTIVITIES.index(suggested_activity),
             )
-            food_choice_submit_button = st.form_submit_button(label="Submit")
+            activity_choice_submit_button = st.form_submit_button(label="Choose this activity")
 
-        if food_choice_submit_button:
-            send_mail(suggested_activity, food_choice)
-            st.session_state.food_choice = food_choice
-            st.session_state.food_submitted = True
+        if activity_choice_submit_button:
+            st.session_state.chosen_activity = chosen_activity
+            st.session_state.activity_choice_submitted = True
+            st.rerun()
 
-    if st.session_state.get("food_submitted", False):
-        food_choice = st.session_state.food_choice
-        if food_choice == "Decide later":
-            st.write("You can decide what to eat later.")
-        else:
-            st.write(f"You have chosen to eat: **{food_choice}** after the activity.")
+    if st.session_state.get("activity_choice_submitted", False):
+        chosen_activity = st.session_state.chosen_activity
+        st.write(f"You chose: **{chosen_activity}**.")
+
+        if not st.session_state.get("food_decision_submitted", False):
+            with st.form(key="food_decision_form"):
+                st.markdown("Would you like to decide what to eat after the activity or do you wanna leave it to Sunday night?\n"
+                         "Keep in mind that I didn't forget what we said and the incredible fact that you never saw "
+                         "the movies we talked about, so remember that after the activity we either go to eat something and then have to "
+                         "watch the movie, or we go directly to watch the movie, your choice.")
+                food_decision = st.radio("Choose an option:", ["Decide now", "Decide later"])
+                food_decision_submit_button = st.form_submit_button(label="Submit")
+
+            if food_decision_submit_button:
+                if food_decision == "Decide later":
+                    send_mail(chosen_activity, "Decide later")
+                    st.session_state.food_choice = "Decide later"
+                    st.session_state.food_submitted = True
+                st.session_state.food_decision = food_decision
+                st.session_state.food_decision_submitted = True
+                st.rerun()
+
+        if (
+            st.session_state.get("food_decision_submitted", False)
+            and st.session_state.food_decision == "Decide now"
+            and not st.session_state.get("food_submitted", False)
+        ):
+            with st.form(key="food_choice_form"):
+                food_choice = st.selectbox(
+                    "What would you prefer to eat?",
+                    [
+                        "Pizza (Always a nice idea)",
+                        "Gyoza and Ramen (I saw a cute place close to you)",
+                        "Korean fried chicken (Same as Gyoza and Ramen)",
+                        "Something else that you know in your surroundings",
+                    ],
+                )
+                food_choice_submit_button = st.form_submit_button(label="Submit")
+
+            if food_choice_submit_button:
+                send_mail(chosen_activity, food_choice)
+                st.session_state.food_choice = food_choice
+                st.session_state.food_submitted = True
+                st.rerun()
+
+        if st.session_state.get("food_submitted", False):
+            food_choice = st.session_state.food_choice
+            if food_choice == "Decide later":
+                st.write("You can decide what to eat later.")
+            else:
+                st.write(f"You have chosen to eat: **{food_choice}** after the activity.")
     
