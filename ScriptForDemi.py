@@ -84,7 +84,8 @@ def send_mail(activity, food):
 
         return True
 
-    except (smtplib.SMTPException, OSError):
+    except (smtplib.SMTPException, OSError) as e:
+        st.error(f"Email error: {type(e).__name__}: {e}")
         return False
 
 
